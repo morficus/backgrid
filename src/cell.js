@@ -356,6 +356,34 @@ var StringCell = Backgrid.StringCell = Cell.extend({
 });
 
 /**
+  HtmlCell displays a cell that is capable of rending HTML content
+
+  @class Backgrid.HtmlCell
+  @extend Backgrind.StringCell
+ */
+var HtmlCell = Backgrid.HtmlCell = StringCell.extend({
+
+  /** @property */
+  className: "html-cell",
+
+
+  /**
+     Render an HTML string in a table cell. The text is converted from the
+     model's raw value for this cell's column.
+  */
+  render: function () {
+    this.$el.empty();
+    var htmlContent = this.formatter.fromRaw(this.model.get(this.column.get("name")));
+    //in an attempt to avoid XSS, eliminate anything that is surounded by script-tags 
+    htmlContent = HtmlContent.replace(/<script>(.*)<\/script>/g, '');
+    this.$el.html(htmlContent);
+    this.delegateEvents();
+    return this;
+  },
+
+});
+
+/**
    UriCell renders an HTML `<a>` anchor for the value and accepts URIs as user
    input values. No type conversion or URL validation is done by the formatter
    of this cell. Users who need URL validation are encourage to subclass UriCell
