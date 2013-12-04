@@ -146,6 +146,18 @@
   content: "";
 }
 
+.backgrid .loading-indicator {
+  background-image: url('../assets/img/loading-indicator.gif');
+  position: absolute;
+  left: 0;
+  right: 0;
+  background-position: center center;
+  background-repeat: no-repeat;
+  display: inherit;
+  max-width: none;
+  height: 80px;
+}
+
 .backgrid .ascending .sort-caret {
   vertical-align: baseline;
   border-top: none;
