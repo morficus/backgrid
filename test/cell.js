@@ -248,6 +248,69 @@ describe("A Cell", function () {
 
     cell.column.set("renderable", false);
     expect(cell.$el.hasClass("renderable")).toBe(false);
+
+    var TrueCol = Backgrid.Column.extend({
+      mySortable: function () { return true; },
+      myRenderable: function () { return true; },
+      myEditable: function () { return true; }
+    });
+
+    var FalseCol = Backgrid.Column.extend({
+      mySortable: function () { return false; },
+      myRenderable: function () { return false; },
+      myEditable: function () { return false; }
+    });
+
+    column = new TrueCol({
+      name: "title",
+      cell: "string",
+      sortable: "mySortable",
+      renderable: "myRenderable",
+      editable: "myEditable"
+    });
+
+    cell = new Backgrid.Cell({
+      model: book,
+      column: column
+    });
+
+    expect(cell.$el.hasClass("editable")).toBe(true);
+    expect(cell.$el.hasClass("sortable")).toBe(true);
+    expect(cell.$el.hasClass("renderable")).toBe(true);
+
+    column = new FalseCol({
+      name: "title",
+      cell: "string",
+      sortable: "mySortable",
+      renderable: "myRenderable",
+      editable: "myEditable"
+    });
+
+    cell = new Backgrid.Cell({
+      model: book,
+      column: column
+    });
+
+    expect(cell.$el.hasClass("editable")).toBe(false);
+    expect(cell.$el.hasClass("sortable")).toBe(false);
+    expect(cell.$el.hasClass("renderable")).toBe(false);
+
+    column = new Backgrid.Column({
+      name: "title",
+      cell: "string",
+      sortable: function () { return true; },
+      editable: function () { return true; },
+      renderable: function () { return true; }
+    });
+
+    cell = new Backgrid.Cell({
+      model: book,
+      column: column
+    });
+
+    expect(cell.$el.hasClass("editable")).toBe(true);
+    expect(cell.$el.hasClass("sortable")).toBe(true);
+    expect(cell.$el.hasClass("renderable")).toBe(true);
   });
 
   it("renders a td with the model value formatted for display", function () {
@@ -548,7 +611,7 @@ describe("An IntegerCell", function () {
     expect(cell.$el.text()).toBe("1");
   });
 
-  it("description", function () {
+  it("can be extended and it's defaults overidden", function () {
 
     var PlainIntegerCell = Backgrid.IntegerCell.extend({
       orderSeparator: ''
@@ -566,6 +629,56 @@ describe("An IntegerCell", function () {
 
     cell.render();
     expect(cell.$el.text()).toBe("1000");
+  });
+
+});
+
+describe("A PercentCell", function () {
+
+  var cell;
+
+  beforeEach(function () {
+    cell = new Backgrid.PercentCell({
+      model: new Backbone.Model({
+        rate: 99.8
+      }),
+      column: {
+        name: "rate",
+        cell: "percent"
+      }
+    });
+  });
+
+  it("applies an percent-cell class to the cell", function () {
+    cell.render();
+    expect(cell.$el.hasClass("percent-cell")).toBe(true);
+  });
+
+  it("will render a percentage string", function () {
+    cell.render();
+    expect(cell.$el.text()).toBe("99.80%");
+  });
+
+  it("can be extended and it's defaults overidden", function () {
+
+    var MyPercentCell = Backgrid.PercentCell.extend({
+      orderSeparator: '',
+      symbol: "pct",
+      multiplier: 100
+    });
+
+    var cell = new MyPercentCell({
+      model: new Backbone.Model({
+        rate: 10.99
+      }),
+      column: {
+        name: "rate",
+        cell: MyPercentCell
+      }
+    });
+
+    cell.render();
+    expect(cell.$el.text()).toBe("1099.00pct");
   });
 
 });
@@ -1201,24 +1314,11 @@ describe("A SelectCellEditor", function () {
     editor.render();
 
     spyOn(editor.formatter, "toRaw").andCallThrough();
-    spyOn(editor, "trigger").andCallThrough();
-
-    var backgridEditedTriggerCount = 0;
-    var backgridEditedTriggerArgs;
-    editor.model.on("backgrid:edited", function () {
-      backgridEditedTriggerCount++;
-      backgridEditedTriggerArgs = [].slice.call(arguments);
-    });
 
     editor.$el.val(1).change();
     expect(editor.formatter.toRaw).toHaveBeenCalledWith("1", editor.model);
     expect(editor.formatter.toRaw.calls.length).toBe(1);
     expect(editor.model.get(editor.column.get("name"))).toBe("1");
-
-    expect(backgridEditedTriggerCount).toBe(1);
-    expect(backgridEditedTriggerArgs[0]).toEqual(editor.model);
-    expect(backgridEditedTriggerArgs[1]).toEqual(editor.column);
-    expect(backgridEditedTriggerArgs[2].passThru()).toBe(true);
 
     // multiple selection
     var editor = new Backgrid.SelectCellEditor({
@@ -1237,35 +1337,16 @@ describe("A SelectCellEditor", function () {
     editor.render();
 
     spyOn(editor.formatter, "toRaw").andCallThrough();
-    spyOn(editor, "trigger").andCallThrough();
-
-    var backgridEditedTriggerCount = 0;
-    var backgridEditedTriggerArgs;
-    editor.model.on("backgrid:edited", function () {
-      backgridEditedTriggerCount++;
-      backgridEditedTriggerArgs = [].slice.call(arguments);
-    });
 
     editor.$el.val([1, 2]).change();
     expect(editor.formatter.toRaw).toHaveBeenCalledWith(["1", "2"], editor.model);
     expect(editor.formatter.toRaw.calls.length).toBe(1);
     expect(editor.model.get(editor.column.get("name"))).toEqual(["1", "2"]);
 
-    expect(backgridEditedTriggerCount).toBe(1);
-    expect(backgridEditedTriggerArgs[0]).toEqual(editor.model);
-    expect(backgridEditedTriggerArgs[1]).toEqual(editor.column);
-    expect(backgridEditedTriggerArgs[2].passThru()).toBe(true);
-
-    backgridEditedTriggerCount = 0;
     editor.$el.val(null).change();
     expect(editor.formatter.toRaw).toHaveBeenCalledWith(null, editor.model);
     expect(editor.formatter.toRaw.calls.length).toBe(2);
     expect(editor.model.get(editor.column.get("name"))).toBe(null);
-
-    expect(backgridEditedTriggerCount).toBe(1);
-    expect(backgridEditedTriggerArgs[0]).toEqual(editor.model);
-    expect(backgridEditedTriggerArgs[1]).toEqual(editor.column);
-    expect(backgridEditedTriggerArgs[2].passThru()).toBe(true);
   });
 
   it("saves the value to the model on blur if there's only one option", function () {

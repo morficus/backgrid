@@ -98,7 +98,7 @@ var InputCellEditor = Backgrid.InputCellEditor = CellEditor.extend({
      exists.
   */
   render: function () {
-    var model = this.model
+    var model = this.model;
     this.$el.val(this.formatter.fromRaw(model.get(this.column.get("name")), model));
     return this;
   },
@@ -248,9 +248,9 @@ var Cell = Backgrid.Cell = Backbone.View.extend({
                     }
                   });
 
-    if (column.get("editable")) $el.addClass("editable");
-    if (column.get("sortable")) $el.addClass("sortable");
-    if (column.get("renderable")) $el.addClass("renderable");
+    if (Backgrid.callByNeed(column.editable(), column, model)) $el.addClass("editable");
+    if (Backgrid.callByNeed(column.sortable(), column, model)) $el.addClass("sortable");
+    if (Backgrid.callByNeed(column.renderable(), column, model)) $el.addClass("renderable");
   },
 
   /**
@@ -509,6 +509,43 @@ var IntegerCell = Backgrid.IntegerCell = NumberCell.extend({
      @property {number} decimals Must be an integer.
   */
   decimals: 0
+});
+
+/**
+   A PercentCell is another Backgrid.NumberCell that takes a floating number,
+   optionally multiplied by a multiplier and display it as a percentage.
+
+   @class Backgrid.PercentCell
+   @extends Backgrid.NumberCell
+ */
+var PercentCell = Backgrid.PercentCell = NumberCell.extend({
+
+  /** @property */
+  className: "percent-cell",
+
+  /** @property {number} [multiplier=1] */
+  multiplier: PercentFormatter.prototype.defaults.multiplier,
+
+  /** @property {string} [symbol='%'] */
+  symbol: PercentFormatter.prototype.defaults.symbol,
+
+  /** @property {Backgrid.CellFormatter} [formatter=Backgrid.PercentFormatter] */
+  formatter: PercentFormatter,
+
+  /**
+     Initializes this cell and the percent formatter.
+
+     @param {Object} options
+     @param {Backbone.Model} options.model
+     @param {Backgrid.Column} options.column
+  */
+  initialize: function () {
+    PercentCell.__super__.initialize.apply(this, arguments);
+    var formatter = this.formatter;
+    formatter.multiplier = this.multiplier;
+    formatter.symbol = this.symbol;
+  }
+
 });
 
 /**
@@ -830,14 +867,12 @@ var SelectCellEditor = Backgrid.SelectCellEditor = CellEditor.extend({
   },
 
   /**
-     Saves the value of the selected option to the model attribute. Triggers a
-     `backgrid:edited` Backbone event from the model.
+     Saves the value of the selected option to the model attribute.
   */
   save: function (e) {
     var model = this.model;
     var column = this.column;
     model.set(column.get("name"), this.formatter.toRaw(this.$el.val(), model));
-    model.trigger("backgrid:edited", model, column, new Command(e));
   },
 
   /**
@@ -856,9 +891,7 @@ var SelectCellEditor = Backgrid.SelectCellEditor = CellEditor.extend({
              command.moveUp() || command.moveDown() || e.type == "blur") {
       e.preventDefault();
       e.stopPropagation();
-      if (e.type == "blur" && this.$el.find("option").length === 1) {
-        model.set(column.get("name"), this.formatter.toRaw(this.$el.val(), model));
-      }
+      this.save(e);
       model.trigger("backgrid:edited", model, column, new Command(e));
     }
   }

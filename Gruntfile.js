@@ -33,6 +33,7 @@ module.exports = function (grunt) {
         "lib/*.css"
       ]
     },
+
     concat: {
       backgrid: {
         options: {
@@ -49,12 +50,9 @@ module.exports = function (grunt) {
             '                             require("backbone"));\n' +
             '  }\n' +
             '  // Browser\n' +
-            '  else if (typeof _ !== "undefined" &&\n' +
-            '    typeof Backbone !== "undefined") {\n' +
-            '    factory(window, _, Backbone);\n' +
-            '  }\n' +
+            '  else factory(this, this._, this.Backbone);\n' +
             '}(function (root, _, Backbone) {\n\n  \"use strict\";\n',
-          footer: 'return Backgrid;\n' + 
+          footer: 'return Backgrid;\n' +
             '}));'
         },
         src: [
@@ -71,6 +69,7 @@ module.exports = function (grunt) {
         dest: "lib/backgrid.js"
       }
     },
+
     connect: {
       server: {
         options: {
@@ -78,6 +77,7 @@ module.exports = function (grunt) {
         }
       }
     },
+
     jasmine: {
       test: {
         version: "1.3.1",
@@ -106,16 +106,17 @@ module.exports = function (grunt) {
               }
             }
           },
-          helpers: "assets/js/jasmine-html.js",
+          helpers: "vendor/js/jasmine-html.js",
           vendor: [
-            "assets/js/jquery.js",
-            "assets/js/underscore.js",
-            "assets/js/backbone.js",
-            "assets/js/backbone-pageable.js"
+            "test/vendor/js/jquery.js",
+            "test/vendor/js/underscore.js",
+            "test/vendor/js/backbone.js",
+            "test/vendor/js/backbone-pageable.js"
           ]
         }
       }
     },
+
     jsduck: {
       main: {
         src: ["src"],
@@ -142,6 +143,7 @@ module.exports = function (grunt) {
         }
       }
     },
+
     recess: {
       csslint: {
         options: {
@@ -160,6 +162,7 @@ module.exports = function (grunt) {
         }
       }
     },
+
     uglify: {
       options: {
         mangle: true,
@@ -171,12 +174,20 @@ module.exports = function (grunt) {
           "lib/backgrid.min.js": ["./lib/backgrid.js"]
         }
       }
+    },
+
+    watch: {
+      default: {
+        files: ["src/**/*.*"],
+        tasks: ["dist"]
+      }
     }
   });
 
   grunt.loadNpmTasks("grunt-contrib-clean");
   grunt.loadNpmTasks("grunt-contrib-concat");
   grunt.loadNpmTasks("grunt-contrib-uglify");
+  grunt.loadNpmTasks("grunt-contrib-watch");
   grunt.loadNpmTasks("grunt-recess");
   grunt.loadNpmTasks("grunt-jsduck");
   grunt.loadNpmTasks("grunt-contrib-jasmine");

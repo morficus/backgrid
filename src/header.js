@@ -38,9 +38,7 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
       this.column = new Column(this.column);
     }
 
-    this.listenTo(this.collection, "backgrid:sort", this._resetCellDirection);
-
-    var column = this.column, $el = this.$el;
+    var column = this.column, collection = this.collection, $el = this.$el;
 
     this.listenTo(column, "change:editable change:sortable change:renderable",
                   function (column) {
@@ -54,9 +52,11 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
 
     this.listenTo(column, "change:name change:label", this.render);
 
-    if (column.get("editable")) $el.addClass("editable");
-    if (column.get("sortable")) $el.addClass("sortable");
-    if (column.get("renderable")) $el.addClass("renderable");
+    if (Backgrid.callByNeed(column.editable(), column, collection)) $el.addClass("editable");
+    if (Backgrid.callByNeed(column.sortable(), column, collection)) $el.addClass("sortable");
+    if (Backgrid.callByNeed(column.renderable(), column, collection)) $el.addClass("renderable");
+
+    this.listenTo(collection, "backgrid:sort", this._resetCellDirection);
   },
 
   /**
@@ -72,7 +72,7 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
       var direction = this.column.get('direction');
       if (direction) this.$el.removeClass(direction);
       if (dir) this.$el.addClass(dir);
-      this.column.set('direction', dir)
+      this.column.set('direction', dir);
     }
 
     return this.column.get('direction');
@@ -126,10 +126,15 @@ var HeaderCell = Backgrid.HeaderCell = Backbone.View.extend({
   render: function () {
     this.$el.empty();
     var column = this.column;
-    var $label = $("<a>").text(column.get("label"));
     var sortable = Backgrid.callByNeed(column.sortable(), column, this.collection);
-    if (sortable) $label.append("<b class='sort-caret'></b>");
-    this.$el.append($label);
+    var label;
+    if(sortable){
+      label = $("<a>").text(column.get("label")).append("<b class='sort-caret'></b>");
+    } else {
+      label = document.createTextNode(column.get("label"));
+    }
+
+    this.$el.append(label);
     this.$el.addClass(column.get("name"));
     this.delegateEvents();
     this.direction(column.get("direction"));
