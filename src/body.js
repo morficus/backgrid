@@ -18,6 +18,8 @@ var Body = Backgrid.Body = Backbone.View.extend({
   /** @property */
   tagName: "tbody",
 
+  loadingIndicatorClass: "loading-indicator",
+
   /**
      Initializer.
 
@@ -39,6 +41,7 @@ var Body = Backgrid.Body = Backbone.View.extend({
       this.columns = new Columns(this.columns);
     }
 
+    this.loadingIndicatorClass = options.loadingIndicatorClass || this.loadingIndicatorClass;
     this.row = options.row || Row;
     this.rows = this.collection.map(function (model) {
       var row = new this.row({
@@ -57,6 +60,7 @@ var Body = Backgrid.Body = Backbone.View.extend({
     this.listenTo(collection, "remove", this.removeRow);
     this.listenTo(collection, "sort", this.refresh);
     this.listenTo(collection, "reset", this.refresh);
+    this.listenTo(collection, "request", this.showLoadingIndicator);
     this.listenTo(collection, "backgrid:sort", this.sort);
     this.listenTo(collection, "backgrid:edited", this.moveToNextCell);
   },
@@ -193,6 +197,23 @@ var Body = Backgrid.Body = Backbone.View.extend({
     this.collection.trigger("backgrid:refresh", this);
 
     return this;
+  },
+
+  /**
+    Empties the table body and shows the loading indicator while data is being fetched
+   */
+  showLoadingIndicator: function() {
+    this.$el.empty();
+
+    var numberOfColumns = this.columns.length;
+    var loadingCell = document.createElement("td");
+    var row = document.createElement("tr");
+
+    loadingCell.colSpan = numberOfColumns;
+    loadingCell.className = this.loadingIndicatorClass;
+    row.appendChild(loadingCell);
+
+    this.$el.append(row);
   },
 
   /**
